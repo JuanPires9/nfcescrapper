@@ -16,6 +16,14 @@ def get_browser() -> Firefox:
     """
     options = Options()
     options.add_argument("--headless")
+    # Evita detecção de bot pelos portais de segurança da SEFAZ
+    options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0")
+    options.set_preference("dom.webdriver.enabled", False)
+    # Configura o binário do Firefox se estiver rodando no Linux/Docker
+    if os.path.exists("/usr/bin/firefox-esr"):
+        options.binary_location = "/usr/bin/firefox-esr"
+    elif os.path.exists("/usr/bin/firefox"):
+        options.binary_location = "/usr/bin/firefox"
 
     WEBDRIVER_PATH = os.environ.get("WEBDRIVER_PATH")
 

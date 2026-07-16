@@ -24,7 +24,7 @@ class NfceScraper(Scraper):
         browser: WebDriver = None,
         parser: Parser = NfceParser(),
         id_to_wait: str = "tabResult",
-        timeout: int = 5,
+        timeout: int = 10,
     ):
         """
         Initializes a Scraper object.

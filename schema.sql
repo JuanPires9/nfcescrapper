@@ -33,8 +33,8 @@ CREATE TABLE public.produtos (
 
 CREATE TABLE public.notas_fiscais (
 	id bigserial NOT NULL PRIMARY key,
-	id_empresa bigserial REFERENCES empresas(id) ON DELETE SET NULL ON UPDATE CASCADE,
-	id_usuario bigserial REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
+	id_empresa bigint REFERENCES empresas(id) ON DELETE SET NULL ON UPDATE CASCADE,
+	id_usuario bigint REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
 	chave_acesso varchar(50) NOT NULL,
 	numero varchar NOT NULL, 
 	serie varchar NOT NULL,
@@ -51,8 +51,8 @@ CREATE TABLE public.notas_fiscais (
 
 CREATE TABLE public.itens_nota (
 	id bigserial NOT NULL PRIMARY KEY,
-	id_produto bigserial REFERENCES produtos(id) ON DELETE SET NULL ON UPDATE CASCADE,
-	id_nota_fiscal bigserial REFERENCES notas_fiscais(id) ON DELETE SET NULL ON UPDATE CASCADE,
+	id_produto bigint REFERENCES produtos(id) ON DELETE SET NULL ON UPDATE CASCADE,
+	id_nota_fiscal bigint REFERENCES notas_fiscais(id) ON DELETE SET NULL ON UPDATE CASCADE,
 	quantidade decimal NULL DEFAULT 0,
 	preco_unitario decimal NOT NULL DEFAULT 0.0,
 	unidade_medida varchar DEFAULT NULL,

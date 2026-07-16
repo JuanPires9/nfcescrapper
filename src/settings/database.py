@@ -1,3 +1,4 @@
+from urllib.parse import quote_plus
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -5,7 +6,10 @@ from .environment import get_environment_variables
 
 env = get_environment_variables()
 
-DATABASE_URL = f"{env.DATABASE_DIALECT}://{env.DATABASE_USERNAME}:{env.DATABASE_PASSWORD}@{env.DATABASE_HOSTNAME}:{env.DATABASE_PORT}/{env.DATABASE_NAME}"
+username = quote_plus(env.DATABASE_USERNAME) if env.DATABASE_USERNAME else ""
+password = quote_plus(env.DATABASE_PASSWORD) if env.DATABASE_PASSWORD else ""
+
+DATABASE_URL = f"{env.DATABASE_DIALECT}://{username}:{password}@{env.DATABASE_HOSTNAME}:{env.DATABASE_PORT}/{env.DATABASE_NAME}"
 
 Engine = create_engine(DATABASE_URL, echo=env.DEBUG_MODE, future=True)
 

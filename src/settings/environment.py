@@ -1,7 +1,7 @@
 from functools import lru_cache
 import os
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 @lru_cache
@@ -22,9 +22,11 @@ class EnvironmentSettings(BaseSettings):
     DEBUG_MODE: bool = os.getenv("DEBUG_MODE", False)
     TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
-    class Config:
-        env_file = get_env_filename()
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(
+        env_file=get_env_filename(),
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 
 @lru_cache

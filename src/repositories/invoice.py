@@ -13,15 +13,27 @@ class InvoiceRepository(Repository):
     def save(self, entity: EletronicInvoice) -> EletronicInvoice:
         # TODO: If the invoice already exists, raise exception
 
+        user_id = entity.user.id if entity.user else (entity.user_id if entity.user_id else None)
+        
+        if isinstance(entity.company, int):
+            company_id = entity.company
+        elif entity.company:
+            company_id = entity.company.id
+        else:
+            company_id = entity.company_id if entity.company_id else None
+
+        issue_date = entity.issue_date if entity.issue_date and str(entity.issue_date).strip() != "" else None
+        authorization_date = entity.authorization_date if entity.authorization_date and str(entity.authorization_date).strip() != "" else None
+
         invoice = InvoiceSchema(
-            user_id=entity.user.id,
-            company_id=entity.company.id,
+            user_id=user_id,
+            company_id=company_id,
             access_key=entity.access_key,
             number=entity.number,
             series=entity.series,
-            issue_date=entity.issue_date,
+            issue_date=issue_date,
             authorization_protocol=entity.authorization_protocol,
-            authorization_date=entity.authorization_date,
+            authorization_date=authorization_date,
             federal_tax=entity.taxes.federal,
             state_tax=entity.taxes.state,
             city_tax=entity.taxes.municipal,

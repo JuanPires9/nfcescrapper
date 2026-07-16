@@ -111,7 +111,7 @@ async def scrape_and_save_invoice(
     item_repo: Annotated[ItemRepository, Depends(get_items_repository)],
 ) -> dict[str, str]:
     try:
-        scraper = NfceScraper()
+        scraper = NfceScraper(timeout=10)
         invoice_data = scraper.get(body.url)
         
         save_invoice(

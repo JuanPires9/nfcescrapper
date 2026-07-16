@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leitor NFC-e — Scanner Premium</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
-    
+
     <style>
         * {
             box-sizing: border-box;
@@ -82,7 +83,7 @@
         #video-container {
             position: relative;
             width: 100%;
-            aspect-ratio: 1;
+            aspect-ratio: 3/4;
             border-radius: 20px;
             overflow: hidden;
             border: 2px solid rgba(255, 255, 255, 0.1);
@@ -110,9 +111,17 @@
         }
 
         @keyframes scanning {
-            0% { top: 0%; }
-            50% { top: 100%; }
-            100% { top: 0%; }
+            0% {
+                top: 0%;
+            }
+
+            50% {
+                top: 100%;
+            }
+
+            100% {
+                top: 0%;
+            }
         }
 
         .scanner-guide {
@@ -142,8 +151,15 @@
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .result-card h3 {
@@ -239,8 +255,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .overlay-text {
@@ -283,6 +304,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="card">
@@ -305,11 +327,36 @@
             <video id="video"></video>
         </div>
 
+        <!-- Manual Backup URL Input -->
+        <button class="btn btn-secondary" id="btn-manual-url" type="button"
+            style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; padding: 12px;">
+            ⌨ Digitar URL do Cupom (Backup)
+        </button>
+
+        <div id="manual-input-container"
+            style="display: none; margin-top: 15px; padding: 18px; background: rgba(255, 255, 255, 0.04); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.08); text-align: left; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+            <h4 style="font-size: 1rem; color: #38bdf8; margin-bottom: 8px; font-weight: 600;">Inserir URL Manualmente
+            </h4>
+            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 12px; line-height: 1.3;">Cole o link completo da
+                NFC-e (com o parâmetro "?p=") no campo abaixo:</p>
+            <textarea id="manual-url-input" rows="4" placeholder="https://consultadfe.fazenda.rj..."
+                style="width: 100%; padding: 12px 14px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: #f8fafc; border-radius: 10px; font-size: 0.85rem; outline: none; margin-bottom: 10px; resize: none; font-family: sans-serif; transition: border-color 0.2s; line-height: 1.4;"></textarea>
+
+            <div id="manual-url-error"
+                style="display: none; color: #f87171; font-size: 0.8rem; margin-bottom: 14px; line-height: 1.4; padding: 10px 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+            </div>
+
+            <button class="btn btn-primary" id="btn-manual-submit"
+                style="padding: 12px; font-size: 0.9rem; font-weight: 600;">
+                Processar URL Manual
+            </button>
+        </div>
+
         <!-- Scan Result Card -->
         <div id="result-container" class="result-card">
             <h3>✓ QR Code Lido</h3>
             <div class="result-url" id="scanned-url"></div>
-            
+
             <button class="btn btn-primary" id="btn-process">
                 Enviar NFC-e para o Banco
             </button>
@@ -335,6 +382,99 @@
             const loadingOverlay = document.getElementById('loading-overlay');
             const toast = document.getElementById('toast');
 
+            const btnManualUrl = document.getElementById('btn-manual-url');
+            const manualInputContainer = document.getElementById('manual-input-container');
+            const manualUrlInput = document.getElementById('manual-url-input');
+            const btnManualSubmit = document.getElementById('btn-manual-submit');
+
+            // Toggle manual input area
+            if (btnManualUrl && manualInputContainer) {
+                btnManualUrl.addEventListener('click', () => {
+                    const isHidden = manualInputContainer.style.display === 'none';
+                    const videoContainer = document.getElementById('video-container');
+                    const errorDiv = document.getElementById('manual-url-error');
+
+                    if (errorDiv) {
+                        errorDiv.style.display = 'none';
+                        errorDiv.innerText = "";
+                    }
+
+                    if (isHidden) {
+                        // Fecha a câmera e esconde o vídeo
+                        codeReader.reset();
+                        if (videoContainer) videoContainer.style.display = 'none';
+                        if (sourceSelect) sourceSelect.style.display = 'none';
+                        manualInputContainer.style.display = 'block';
+                        manualUrlInput.value = "";
+                        manualUrlInput.focus();
+                        btnManualUrl.innerText = "📷 Voltar para a Câmera";
+                    } else {
+                        // Reabre a câmera
+                        manualInputContainer.style.display = 'none';
+                        if (videoContainer) videoContainer.style.display = 'block';
+                        if (sourceSelect && sourceSelect.children.length > 1) {
+                            sourceSelect.style.display = 'block';
+                        }
+                        btnManualUrl.innerText = "⌨ Digitar URL do Cupom (Backup)";
+                        startScanning();
+                    }
+                });
+            }
+
+            // Submit manual URL
+            if (btnManualSubmit && manualUrlInput) {
+                btnManualSubmit.addEventListener('click', () => {
+                    const url = manualUrlInput.value.trim();
+                    const errorDiv = document.getElementById('manual-url-error');
+
+                    if (errorDiv) {
+                        errorDiv.style.display = 'none';
+                        errorDiv.innerText = "";
+                    }
+
+                    if (!url) {
+                        showToast("Por favor, cole uma URL.", true);
+                        return;
+                    }
+
+                    // Validação antecipada: NFC-e de QR code precisa conter o parâmetro "p="
+                    let isValid = false;
+                    try {
+                        const parsedUrl = new URL(url);
+                        let hasP = false;
+                        for (let key of parsedUrl.searchParams.keys()) {
+                            if (key.toLowerCase() === 'p') {
+                                hasP = true;
+                                break;
+                            }
+                        }
+                        isValid = hasP;
+                    } catch (e) {
+                        // Fallback para strings coladas sem protocolo completo
+                        isValid = /[?&][pP]=/.test(url);
+                    }
+
+                    if (!isValid) {
+                        if (errorDiv) {
+                            errorDiv.style.display = 'block';
+                            errorDiv.innerHTML = "⚠️ <strong>Link de Sessão ou Inválido:</strong> O link inserido não é o original do QR Code. Ele precisa conter o parâmetro <code>?p=</code>.<br><br>Certifique-se de colar o link original do QR Code e não o endereço da página depois de carregada (resultadoQRCode2.faces).";
+                        }
+                        showToast("Link inválido. Verifique o aviso na tela.", true);
+                        return;
+                    }
+
+                    manualInputContainer.style.display = 'none';
+                    const videoContainer = document.getElementById('video-container');
+                    if (videoContainer) videoContainer.style.display = 'block';
+                    if (sourceSelect && sourceSelect.children.length > 1) {
+                        sourceSelect.style.display = 'block';
+                    }
+                    if (btnManualUrl) btnManualUrl.innerText = "⌨ Digitar URL do Cupom (Backup)";
+                    manualUrlInput.value = "";
+                    enviarUrl(url);
+                });
+            }
+
             // Check if mediaDevices API is supported
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showToast("Seu navegador não suporta acesso à câmera ou a conexão não é segura (requer HTTPS).", true);
@@ -352,12 +492,12 @@
                 .then((videoInputDevices) => {
                     if (videoInputDevices.length >= 1) {
                         // Look for a back camera
-                        const backCamera = videoInputDevices.find(device => 
-                            device.label.toLowerCase().includes('back') || 
+                        const backCamera = videoInputDevices.find(device =>
+                            device.label.toLowerCase().includes('back') ||
                             device.label.toLowerCase().includes('traseira') ||
                             device.label.toLowerCase().includes('environment')
                         );
-                        
+
                         selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
 
                         // Show select dropdown if multiple cameras are present
@@ -392,7 +532,15 @@
                 resultContainer.style.display = 'none';
                 laser.style.display = 'block';
                 guide.style.display = 'block';
-                
+                if (manualInputContainer) manualInputContainer.style.display = 'none';
+
+                const videoContainer = document.getElementById('video-container');
+                if (videoContainer) videoContainer.style.display = 'block';
+                if (sourceSelect && sourceSelect.children.length > 1) {
+                    sourceSelect.style.display = 'block';
+                }
+                if (btnManualUrl) btnManualUrl.innerText = "⌨ Digitar URL do Cupom (Backup)";
+
                 // Request 720p resolution (ideal balance between detail and device capability)
                 const constraints = {
                     video: {
@@ -406,15 +554,15 @@
                 codeReader.decodeFromConstraints(constraints, videoElement, (result, err) => {
                     if (result) {
                         if (navigator.vibrate) navigator.vibrate(100);
-                        
+
                         scannedUrlText.innerText = result.text;
                         resultContainer.style.display = 'block';
                         laser.style.display = 'none';
                         guide.style.display = 'none';
-                        
+
                         // Stop camera capture while displaying result
                         codeReader.reset();
-                        
+
                         document.getElementById('btn-process').onclick = () => {
                             enviarUrl(result.text);
                         };
@@ -428,7 +576,7 @@
             function enviarUrl(url) {
                 // Show loading overlay
                 loadingOverlay.classList.add('active');
-                
+
                 // POST request to FastAPI endpoint /invoices/scrape
                 fetch('/invoices/scrape', {
                     method: 'POST',
@@ -437,26 +585,26 @@
                     },
                     body: JSON.stringify({ url: url })
                 })
-                .then(res => {
-                    loadingOverlay.classList.remove('active');
-                    if (!res.ok) {
-                        return res.json().then(data => {
-                            throw new Error(data.detail || "Erro ao processar a nota.");
-                        });
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    showToast("NFC-e processada e salva com sucesso!", false);
-                    setTimeout(() => {
-                        startScanning(); // Restart camera scanning
-                    }, 1500);
-                })
-                .catch(err => {
-                    loadingOverlay.classList.remove('active');
-                    showToast(err.message, true);
-                    console.error("Erro no envio:", err);
-                });
+                    .then(res => {
+                        loadingOverlay.classList.remove('active');
+                        if (!res.ok) {
+                            return res.json().then(data => {
+                                throw new Error(data.detail || "Erro ao processar a nota.");
+                            });
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        showToast("NFC-e processada e salva com sucesso!", false);
+                        setTimeout(() => {
+                            startScanning(); // Restart camera scanning
+                        }, 1500);
+                    })
+                    .catch(err => {
+                        loadingOverlay.classList.remove('active');
+                        showToast(err.message, true);
+                        console.error("Erro no envio:", err);
+                    });
             }
 
             function showToast(message, isError) {
@@ -467,7 +615,7 @@
                     toast.classList.remove('error');
                 }
                 toast.classList.add('show');
-                
+
                 setTimeout(() => {
                     toast.classList.remove('show');
                 }, 4000);
@@ -477,4 +625,5 @@
         });
     </script>
 </body>
+
 </html>

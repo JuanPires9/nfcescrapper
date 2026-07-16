@@ -22,6 +22,8 @@ class ItemRepository(Repository):
         self.session.commit()
         self.session.refresh(invoice)
 
+        return ItemRepository.__to_entity(invoice)
+
     def delete(self, id: int) -> None:
         self.session.query(ItemSchema).filter_by(id=id).delete()
         self.session.commit()
