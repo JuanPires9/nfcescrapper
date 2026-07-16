@@ -19,7 +19,7 @@ def get_browser() -> Firefox:
 
     WEBDRIVER_PATH = os.environ.get("WEBDRIVER_PATH")
 
-    if not os.path.exists(WEBDRIVER_PATH):
+    if not WEBDRIVER_PATH or not os.path.exists(WEBDRIVER_PATH):
         WEBDRIVER_PATH = GeckoDriverManager().install()
 
     service = Service(WEBDRIVER_PATH)

@@ -25,3 +25,8 @@ class InvoiceModel(InvoicePostRequestModel):
     id: int
 
     created_on: datetime = datetime.now()
+
+
+class ScrapeInvoiceRequestModel(BaseModel):
+    url: str
+

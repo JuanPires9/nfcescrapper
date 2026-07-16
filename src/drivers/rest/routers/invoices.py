@@ -1,14 +1,30 @@
 from typing import Annotated
+from fastapi import APIRouter, Depends, status, HTTPException
 
-from fastapi import APIRouter, Depends, status
 
-from drivers.rest.dependencies import get_invoices_services, validate_id_input
+from drivers.rest.dependencies import (
+    get_invoices_services,
+    validate_id_input,
+    get_invoices_repository,
+    get_companies_repository,
+    get_products_repository,
+    get_items_repository,
+)
 from drivers.rest.schemas.invoices import (
     InvoiceModel,
     InvoicePatchRequestModel,
     InvoicePostRequestModel,
+    ScrapeInvoiceRequestModel,
 )
 from services import InvoiceService
+from scrapers.scrapers import NfceScraper
+from scrapers.database import save_invoice
+from repositories import (
+    InvoiceRepository,
+    CompanyRepository,
+    ProductRepository,
+    ItemRepository,
+)
 
 __all__ = ["router"]
 
@@ -84,3 +100,31 @@ async def get_all_invoices_by_user(
 ) -> list[InvoiceModel]:
 
     return service.find_by_user(id)
+
+
+@router.post("/scrape", status_code=status.HTTP_201_CREATED)
+async def scrape_and_save_invoice(
+    body: ScrapeInvoiceRequestModel,
+    invoice_repo: Annotated[InvoiceRepository, Depends(get_invoices_repository)],
+    company_repo: Annotated[CompanyRepository, Depends(get_companies_repository)],
+    product_repo: Annotated[ProductRepository, Depends(get_products_repository)],
+    item_repo: Annotated[ItemRepository, Depends(get_items_repository)],
+) -> dict[str, str]:
+    try:
+        scraper = NfceScraper()
+        invoice_data = scraper.get(body.url)
+        
+        save_invoice(
+            invoice=invoice_data,
+            invoice_repository=invoice_repo,
+            company_repository=company_repo,
+            product_repository=product_repo,
+            item_repository=item_repo,
+        )
+        return {"status": "success", "message": "NFC-e processada e salva com sucesso!"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao processar NFC-e: {str(e)}",
+        )
+

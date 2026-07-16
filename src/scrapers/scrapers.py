@@ -56,7 +56,7 @@ class NfceScraper(Scraper):
 
     def _get_page(self) -> BeautifulSoup:
         source = self.browser.page_source
-        soup = BeautifulSoup(source, "html.parser")
+        soup = BeautifulSoup(source, "lxml")
 
         return soup
 

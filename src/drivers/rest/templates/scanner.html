@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitor NFC-e — Scanner Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 28px;
+            width: 100%;
+            max-width: 480px;
+            padding: 35px 24px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+        }
+
+        select:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+
+        #video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: #020617;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Scan indicator and guides */
+        .scan-laser {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #38bdf8, #818cf8, #38bdf8, transparent);
+            animation: scanning 2.5s linear infinite;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        @keyframes scanning {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        .scanner-guide {
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 70%;
+            height: 70%;
+            border: 2px dashed rgba(56, 189, 248, 0.5);
+            border-radius: 12px;
+            pointer-events: none;
+            z-index: 4;
+            box-shadow: 0 0 0 1000px rgba(2, 6, 23, 0.45);
+        }
+
+        /* Result container */
+        .result-card {
+            margin-top: 24px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: none;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            word-break: break-all;
+            text-align: left;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card h3 {
+            font-size: 1.15rem;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .result-url {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            user-select: all;
+            margin-bottom: 18px;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #38bdf8, #6366f1);
+            color: white;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Loading / Processing overlay */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            border-radius: 28px;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(56, 189, 248, 0.1);
+            border-top: 4px solid #38bdf8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .overlay-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 6px;
+        }
+
+        .overlay-subtext {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        /* Alert notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #10b981;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            z-index: 200;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        .toast.error {
+            background: #ef4444;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- Loading Overlay -->
+        <div class="overlay" id="loading-overlay">
+            <div class="spinner"></div>
+            <div class="overlay-text">Processando NFC-e</div>
+            <div class="overlay-subtext">Aguardando raspagem da SEFAZ (Selenium)...</div>
+        </div>
+
+        <h1>NFC-e Scanner</h1>
+        <p class="subtitle">Selecione a câmera e aponte para o QR Code</p>
+
+        <!-- Camera Switcher -->
+        <select id="sourceSelect" style="display: none;"></select>
+
+        <div id="video-container">
+            <div class="scan-laser" id="laser"></div>
+            <div class="scanner-guide" id="guide"></div>
+            <video id="video"></video>
+        </div>
+
+        <!-- Scan Result Card -->
+        <div id="result-container" class="result-card">
+            <h3>✓ QR Code Lido</h3>
+            <div class="result-url" id="scanned-url"></div>
+            
+            <button class="btn btn-primary" id="btn-process">
+                Enviar NFC-e para o Banco
+            </button>
+            <button class="btn btn-secondary" id="btn-restart">
+                Escanear Novamente
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script type="text/javascript">
+        window.addEventListener('load', function () {
+            let selectedDeviceId;
+            const codeReader = new ZXing.BrowserQRCodeReader();
+            const videoElement = document.getElementById('video');
+            const sourceSelect = document.getElementById('sourceSelect');
+            const resultContainer = document.getElementById('result-container');
+            const scannedUrlText = document.getElementById('scanned-url');
+            const laser = document.getElementById('laser');
+            const guide = document.getElementById('guide');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const toast = document.getElementById('toast');
+
+            // Check if mediaDevices API is supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast("Seu navegador não suporta acesso à câmera ou a conexão não é segura (requer HTTPS).", true);
+                startScanning();
+                return;
+            }
+
+            // 1. Request camera permission first to get device labels, then list them
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((stream) => {
+                    // Stop temporary stream tracks immediately to release camera for the reader
+                    stream.getTracks().forEach(track => track.stop());
+                    return codeReader.listVideoInputDevices();
+                })
+                .then((videoInputDevices) => {
+                    if (videoInputDevices.length >= 1) {
+                        // Look for a back camera
+                        const backCamera = videoInputDevices.find(device => 
+                            device.label.toLowerCase().includes('back') || 
+                            device.label.toLowerCase().includes('traseira') ||
+                            device.label.toLowerCase().includes('environment')
+                        );
+                        
+                        selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
+
+                        // Show select dropdown if multiple cameras are present
+                        if (videoInputDevices.length > 1) {
+                            sourceSelect.style.display = 'block';
+                            sourceSelect.innerHTML = "";
+                            videoInputDevices.forEach((device) => {
+                                const sourceOption = document.createElement('option');
+                                sourceOption.text = device.label || `Câmera ${sourceSelect.length + 1}`;
+                                sourceOption.value = device.deviceId;
+                                if (device.deviceId === selectedDeviceId) {
+                                    sourceOption.selected = true;
+                                }
+                                sourceSelect.appendChild(sourceOption);
+                            });
+
+                            sourceSelect.onchange = () => {
+                                selectedDeviceId = sourceSelect.value;
+                                codeReader.reset();
+                                startScanning();
+                            };
+                        }
+                    }
+                    startScanning();
+                })
+                .catch((err) => {
+                    console.warn("Erro ao pedir permissão/listar câmeras, tentando câmera padrão:", err);
+                    startScanning(); // Fallback to start scanning with default camera constraints
+                });
+
+            function startScanning() {
+                resultContainer.style.display = 'none';
+                laser.style.display = 'block';
+                guide.style.display = 'block';
+                
+                // Request 720p resolution (ideal balance between detail and device capability)
+                const constraints = {
+                    video: {
+                        deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+                        facingMode: selectedDeviceId ? undefined : "environment",
+                        width: { min: 640, ideal: 1280, max: 1920 },
+                        height: { min: 480, ideal: 720, max: 1080 }
+                    }
+                };
+
+                codeReader.decodeFromConstraints(constraints, videoElement, (result, err) => {
+                    if (result) {
+                        if (navigator.vibrate) navigator.vibrate(100);
+                        
+                        scannedUrlText.innerText = result.text;
+                        resultContainer.style.display = 'block';
+                        laser.style.display = 'none';
+                        guide.style.display = 'none';
+                        
+                        // Stop camera capture while displaying result
+                        codeReader.reset();
+                        
+                        document.getElementById('btn-process').onclick = () => {
+                            enviarUrl(result.text);
+                        };
+                    }
+                    if (err && !(err instanceof ZXing.NotFoundException)) {
+                        console.error("Erro durante decodificação:", err);
+                    }
+                });
+            }
+
+            function enviarUrl(url) {
+                // Show loading overlay
+                loadingOverlay.classList.add('active');
+                
+                // POST request to FastAPI endpoint /invoices/scrape
+                fetch('/invoices/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url })
+                })
+                .then(res => {
+                    loadingOverlay.classList.remove('active');
+                    if (!res.ok) {
+                        return res.json().then(data => {
+                            throw new Error(data.detail || "Erro ao processar a nota.");
+                        });
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    showToast("NFC-e processada e salva com sucesso!", false);
+                    setTimeout(() => {
+                        startScanning(); // Restart camera scanning
+                    }, 1500);
+                })
+                .catch(err => {
+                    loadingOverlay.classList.remove('active');
+                    showToast(err.message, true);
+                    console.error("Erro no envio:", err);
+                });
+            }
+
+            function showToast(message, isError) {
+                toast.innerText = message;
+                if (isError) {
+                    toast.classList.add('error');
+                } else {
+                    toast.classList.remove('error');
+                }
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 4000);
+            }
+
+            document.getElementById('btn-restart').addEventListener('click', startScanning);
+        });
+    </script>
+</body>
+</html>
