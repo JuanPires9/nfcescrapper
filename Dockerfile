@@ -10,12 +10,10 @@ ENV WEBDRIVER_PATH=$LOCAL_BIN_PATH/geckodriver
 # Update the package list and install the required dependencies and Firefox webdriver.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates gnupg wget curl unzip firefox-esr libpq-dev build-essential \
-    && rm -fr /var/lib/apt/lists/*                \
     && curl -L "https://github.com/mozilla/geckodriver/releases/download/v$GECKDRIVER_VERSION/geckodriver-v$GECKDRIVER_VERSION-linux64.tar.gz" | tar xz -C $LOCAL_BIN_PATH \
     && chmod +x $LOCAL_BIN_PATH/geckodriver \
     && ln -s /usr/bin/firefox-esr /usr/bin/firefox \
-    && apt-get purge -y ca-certificates curl \
-    && apt-get autoremove -y
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
