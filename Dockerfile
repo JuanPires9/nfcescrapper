@@ -12,7 +12,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates gnupg wget curl unzip firefox-esr libpq-dev build-essential \
     && curl -L "https://github.com/mozilla/geckodriver/releases/download/v$GECKDRIVER_VERSION/geckodriver-v$GECKDRIVER_VERSION-linux64.tar.gz" | tar xz -C $LOCAL_BIN_PATH \
     && chmod +x $LOCAL_BIN_PATH/geckodriver \
-    && ln -s /usr/bin/firefox-esr /usr/bin/firefox \
+    && ln -sf /usr/bin/firefox-esr /usr/bin/firefox \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
