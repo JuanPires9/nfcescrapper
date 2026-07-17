@@ -24,10 +24,10 @@ COPY . .
 RUN pip install --upgrade pip
 RUN python -m pip install -r requirements.txt --no-cache-dir
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app/src
 
 # Expose the port that the application listens on.
 EXPOSE 80
 
 # Command to start the FastAPI server
-CMD ["sh", "-c", "uvicorn src.api:app --host 0.0.0.0 --port ${PORT:-80}"]
+CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-80}"]

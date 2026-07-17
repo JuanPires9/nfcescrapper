@@ -924,18 +924,18 @@
             const itemsList = document.getElementById('res-items-list');
             itemsList.innerHTML = '';
 
-            const items = Object.entries(data.itens || {});
+            const items = Array.isArray(data.itens) ? data.itens : Object.values(data.itens || {});
             document.getElementById('res-items-count').textContent = `${items.length} ${items.length === 1 ? 'item' : 'itens'}`;
 
-            items.forEach(([code, item]) => {
-                const totalItem = item.quantidade * item.preco_unitario;
+            items.forEach((item) => {
+                const totalItem = item.quantidade * (item.preco_unitario || item.valor_unitario || 0);
                 
                 const itemRow = document.createElement('div');
                 itemRow.className = 'item-row';
                 itemRow.innerHTML = `
                     <div class="item-details">
-                        <span class="item-name" title="${item.descricao_produto}">${item.descricao_produto}</span>
-                        <span class="item-qty-price">${item.quantidade} ${item.unidade_medida} x ${formatCurrency(item.preco_unitario)}</span>
+                        <span class="item-name" title="${item.descricao_produto || item.descricao_xml}">${item.descricao_produto || item.descricao_xml}</span>
+                        <span class="item-qty-price">${item.quantidade} ${item.unidade_medida || item.unidade_xml} x ${formatCurrency(item.preco_unitario || item.valor_unitario)}</span>
                     </div>
                     <div class="item-total">${formatCurrency(totalItem)}</div>
                 `;
