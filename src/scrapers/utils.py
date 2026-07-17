@@ -56,9 +56,17 @@ def to_float(
     Returns:
         float: converted string
     """
+    if isinstance(number, (int, float)):
+        return float(number)
+
     number = sanitize_text(str(number))
     if number == "":
         return default
+
+    try:
+        return float(number)
+    except ValueError:
+        pass
 
     try:
         return float(number.replace(decimal_separator, "").replace(radix, "."))
